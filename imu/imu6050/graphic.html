@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPU6050 Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #222; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: sans-serif;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Connecting to WebSocket server...</div>
+    <script>
+        let scene, camera, renderer, cube;
+        let infoDiv;
+        let websocket;
+
+        // WebSocket server address (must match the Python script)
+        const websocketUrl = "ws://localhost:8080";
+
+        // --- Complementary Filter Variables ---
+        let pitch = 0;
+        let roll = 0;
+        let yaw = 0; // Complementary filter with only Accel/Gyro cannot determine absolute yaw
+        let lastUpdateTime = 0;
+
+        // Filter coefficient (adjust between 0 and 1)
+        // Higher alpha gives more weight to accelerometer (more stable when still, but noisy during motion)
+        // Lower alpha gives more weight to gyroscope (responsive, but drifts over time)
+        const alpha = 0.98; // Typical value between 0.95 and 0.98
+
+        // --- Constants ---
+        const DEG_TO_RAD = Math.PI / 180; // Factor to convert degrees to radians
+        const RAD_TO_DEG = 180 / Math.PI; // Factor to convert radians to degrees
+        const GRAVITY_MS2 = 9.80665; // Approximate acceleration due to gravity
+
+        // Basic setup for the 3D scene
+        function init() {
+            infoDiv = document.getElementById('info');
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Create a cube to represent the sensor
+            const geometry = new THREE.BoxGeometry(1, 0.2, 1); // Adjust size as needed
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+
+            // Add axes helper (X=red, Y=green, Z=blue)
+            const axesHelper = new THREE.AxesHelper(2); // Size of the axes
+            scene.add(axesHelper);
+
+            camera.position.z = 3; // Move camera back to see the cube
+
+            // Handle window resizing
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Start animation loop
+            animate();
+
+            // Connect to the WebSocket server
+            connectWebSocket();
+
+             // Initialize lastUpdateTime when the script starts
+            lastUpdateTime = performance.now();
+        }
+
+        // Handle window resizing
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // Function to update the cube's orientation based on filter output
+        function updateCubeOrientation() {
+            // Apply Euler angles (in radians) from the filter
+            // Adjust the axis mapping (pitch, roll, yaw to X, Y, Z rotation)
+            // depending on your sensor's orientation and how your data is calculated.
+            // Common mapping:
+            // X-axis rotation -> Pitch
+            // Y-axis rotation -> Yaw
+            // Z-axis rotation -> Roll
+            cube.rotation.x = pitch; // Rotate around X-axis
+            cube.rotation.y = yaw;   // Rotate around Y-axis
+            cube.rotation.z = roll;  // Rotate around Z-axis
+
+            infoDiv.textContent = `Pitch: ${pitch * RAD_TO_DEG.toFixed(2)} deg, Roll: ${roll * RAD_TO_DEG.toFixed(2)} deg, Yaw: ${yaw * RAD_TO_DEG.toFixed(2)} deg`;
+        }
+
+        // --- WebSocket Client Logic ---
+        function connectWebSocket() {
+            websocket = new WebSocket(websocketUrl);
+
+            websocket.onopen = function(event) {
+                console.log("WebSocket connection opened:", event);
+                infoDiv.textContent = "WebSocket connected. Waiting for data...";
+            };
+
+            websocket.onmessage = function(event) {
+                // Data received from the Python server
+                const data = JSON.parse(event.data);
+                // console.log("Received data:", data); // Uncomment to see raw data
+
+                // Ensure we have all necessary data points
+                if (data.accelX !== undefined && data.accelY !== undefined && data.accelZ !== undefined &&
+                    data.gyroX !== undefined && data.gyroY !== undefined && data.gyroZ !== undefined) {
+
+                    // Get current time for delta time calculation
+                    const currentTime = performance.now();
+                    // Calculate time difference in seconds
+                    const deltaTime = (currentTime - lastUpdateTime) / 1000.0;
+                    lastUpdateTime = currentTime;
+
+                    // --- Complementary Filter Calculation ---
+
+                    // 1. Accelerometer-based pitch and roll (in radians)
+                    // These calculations assume the sensor is primarily affected by gravity.
+                    // They are inaccurate during linear acceleration.
+                    let accelPitch = Math.atan2(data.accelY, Math.sqrt(data.accelX * data.accelX + data.accelZ * data.accelZ));
+                    let accelRoll = Math.atan2(-data.accelX, Math.sqrt(data.accelY * data.accelY + data.accelZ * data.accelZ));
+
+                    // 2. Gyroscope-based pitch and roll (integrate angular velocity)
+                    // Gyro data is in deg/s, convert to rad/s and integrate
+                    let gyroPitchRate = data.gyroX * DEG_TO_RAD; // Convert deg/s to rad/s
+                    let gyroRollRate = data.gyroY * DEG_TO_RAD;
+                    let gyroYawRate = data.gyroZ * DEG_TO_RAD;
+
+                    // Integrate gyro rates to get change in angle
+                    let gyroPitchDelta = gyroPitchRate * deltaTime;
+                    let gyroRollDelta = gyroRollRate * deltaTime;
+                    let gyroYawDelta = gyroYawRate * deltaTime;
+
+                    // Update pitch, roll, and yaw based on gyroscope integration
+                    // Note: Simple integration like this is prone to drift.
+                    // For better results, use a more advanced filter or quaternions.
+                    pitch += gyroPitchDelta;
+                    roll += gyroRollDelta;
+                    yaw += gyroYawDelta; // Gyro can track relative yaw
+
+                    // 3. Apply complementary filter
+                    // Combine accelerometer and gyroscope estimates
+                    // The accelerometer provides the correction for gyro drift
+                    pitch = alpha * pitch + (1 - alpha) * accelPitch;
+                    roll = alpha * roll + (1 - alpha) * accelRoll;
+
+                    // Yaw cannot be corrected by accelerometer alone, it will drift over time
+                    // unless a magnetometer is used (which the MPU6050 does not have internally).
+
+                    // Update the cube's orientation in the 3D scene
+                    updateCubeOrientation();
+
+                } else {
+                    infoDiv.textContent = "Received data, but missing Accel or Gyro values.";
+                }
+
+            };
+
+            websocket.onerror = function(event) {
+                console.error("WebSocket error observed:", event);
+                infoDiv.textContent = "WebSocket error. Retrying...";
+            };
+
+            websocket.onclose = function(event) {
+                console.log("WebSocket connection closed:", event);
+                infoDiv.textContent = "WebSocket disconnected. Retrying...";
+                // Attempt to reconnect after a delay
+                setTimeout(connectWebSocket, 1000);
+            };
+        }
+
+        // Initialize the application
+        init();
+
+    </script>
+</body>
+</html>
