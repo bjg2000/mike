@@ -12,20 +12,20 @@ v_0 = 300/3.28;
 phi = 0;                                
 theta = 0;
 
-target_r_x_0 = 80/3.28;
-target_r_y_0 = 10/3.28;
+target_r_x_0 = 152/3.28;
+target_r_y_0 = -100/3.28;
 target_r_z_0 = 0/3.28;
 
-target_phi = atand(target_r_y_0/target_r_x_0);
+phi = atand(target_r_y_0/target_r_x_0)
 
-if ((target_phi > 50) || (target_phi < -50))
+if ((phi > 50) || (phi < -50))
     fprintf("Angle too large\n");
     %kill the program
 end
 
 target_v_x_0 = 0/3.28;
 target_v_y_0 = 0/3.28;
-target_v_z_0 = 15/3.28;
+target_v_z_0 = 0/3.28;
 
 t_min = 0;
 t_max = 5;
@@ -69,13 +69,13 @@ for i=1:10
         end
     end
 
-    target_r_x = target_r_x_0 + target_v_x*tn;
-    target_r_y = target_r_y_0 + target_v_y*tn;
-    target_r_z = target_r_z_0 + target_v_z*tn;
-
     target_v_x = target_v_x_0;
     target_v_y = target_v_y_0;
     target_v_z = target_v_z_0;
+
+    target_r_x = target_r_x_0 + target_v_x*tn
+    target_r_y = target_r_y_0 + target_v_y*tn;
+    target_r_z = target_r_z_0 + target_v_z*tn;
 
     %convergence testing
     [tt, xx] = ode45(@(t,x) drag_ode_fun(t,x,a,g), [t_min, t_max], [0, 0, 0, v_x_0, v_y_0, v_z_0]);
@@ -87,35 +87,20 @@ for i=1:10
     y_to_target = (x_sol(2, 2) - target_r_y);
     z_to_target = (x_sol(2, 3) - target_r_z);
 
-    % if (target_r_y_0 > target_r_x_0)
-    %     c_t = 1;
-    % 
-    %     %x_to_target
-    %     %(x_to_target)^c_t / (x_to_target^(c_t - 1) + 1)
-    % 
-    %     phi_os = -atand(target_r_y/x_to_target);
-    % else
-    %     %determine y correction constant as a function of y_to_target. should be 1 when y_to_target is above
-    %     %a certain value, and once below it increases in value in order to
-    %     %dampen oscillations around the solution and converge faster
-    %     c_t = 1;
-    % 
-    %     y_to_target
-    %     (y_to_target)^c_t / (y_to_target^(c_t - 1) + 1)
-    % 
-    %     %phi_os = atand(1/target_r_x * (y_to_target^c_t / (y_to_target^(c_t - 1) + 1)))
-    %     phi_os = atand(y_to_target/target_r_x);
-    % end
+    %phi_os = y_to_target/((1 + target_r_y)/(1 + target_r_x));
 
-    %phi_os = atand(y_to_target/target_r_x);
+    %phi_os = y_to_target/(1 + target_r_y);
+    phi_os = y_to_target;
+    theta_os = z_to_target/1.2;
 
-    c_t = 1;
-    phi_os = atand(1/target_r_x * (y_to_target^c_t / (y_to_target^(c_t - 1) + 1)));
-    theta_os = atand(z_to_target/target_r_x);
-
-    phi = (phi - phi_os);
+    phi = (phi - phi_os)
     theta = (theta - theta_os);
 end
+
+% if (tn > t_max)
+%     %target is out of range, velocity component must be increased
+%     fprintf("Target out of range\n");
+% end
 
 xpos = x_sol(2, 1)*3.28
 ypos = x_sol(2, 2)*3.28
