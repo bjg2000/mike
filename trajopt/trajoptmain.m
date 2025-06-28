@@ -9,27 +9,32 @@ P.c = a;            %drag function constant
 P.nGrid = 100;      %grid discretization
 
 % Set the target (assuming that the trajectory starts at x=0, y=0)
-target.x0 = 100/3.28;  
+target.x0 = 50/3.28;  
 target.y0 = 0/3.28;
 target.z0 = 0/3.28;
 
-target.dx = 20/3.28;
-target.dy = 20/3.28;
+target.dx = 0/3.28;
+target.dy = 0/3.28;
 target.dz = 0/3.28;
 
 %set the initial projectile velocity
 init.speed = 300/3.28;
 
 %init guesses
-init.anglephi = pi/180;
+init.anglephi = 2*pi/180;
 init.angletheta = pi/180;
 
+%start timer
 tic
 
-traj = simulateBlaster(init,P);
-guess.theta = atan(traj.dy(1)/traj.dx(1));
-guess.phi = atan(traj.dz(1)/traj.dx(1));
-guess.T = traj.t(end);  %Trajectory duration
+% traj = simulateBlaster(init,P);
+% guess.theta = atan(traj.dy(1)/traj.dx(1));
+% guess.phi = atan(traj.dz(1)/traj.dx(1));
+% guess.T = traj.t(end);  %Trajectory duration
+
+guess.phi = init.anglephi; 
+guess.theta = init.angletheta; 
+guess.T = 1;
 
 % Set up the decision variables and bounds:
 problem.x0 = [guess.phi; guess.theta; guess.T];
@@ -48,6 +53,7 @@ problem.options = optimset(...
 %Call the constraint function one final time to get the trajectory:
 [~, ~, t, sTraj] = nonLinCst(sSoln,target,P,init.speed);
 
+%end timer and get time to solve
 t_solve = toc
 
 % Store the trajectory in a nice format:
