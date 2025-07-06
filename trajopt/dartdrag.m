@@ -1,5 +1,4 @@
 function dx = dartdrag(~,x,a)
-   %basically cannonDynamics
    dx = zeros(size(x));
    dx(1) = x(4);                                            %r_x(t)
    dx(2) = x(5);                                            %r_y(t)
