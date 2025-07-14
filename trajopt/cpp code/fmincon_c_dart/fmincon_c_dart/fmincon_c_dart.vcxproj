@@ -107,8 +107,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>liblibnlopt.dll.a;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>"C:\Users\Michael\Documents\GitHub\mike\trajopt\cpp code\nlopt_win\NLopt.v2.6.1.x86_64-w64-mingw32.tar\NLopt.v2.6.1.x86_64-w64-mingw32\lib";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libnlopt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Michael\Documents\GitHub\mike\trajopt\cpp code\nlopt_win\NLopt.v2.6.1.x86_64-w64-mingw32.tar\NLopt.v2.6.1.x86_64-w64-mingw32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
