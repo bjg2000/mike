@@ -7,13 +7,13 @@ alpha = 0.5 * rho * c_d * A / m;        %drag function constant
 arrsize = 100;                          %grid discretization  
 
 % Set the target (assuming that the trajectory starts at x=0, y=0, z=0)
-target.x0 = (100)/3.28;  
+target.x0 = (150)/3.28;  
 target.y0 = (0)/3.28;
 target.z0 = (0)/3.28;
 
 target.dx = (0)/3.28;
-target.dy = (8)/3.28;
-target.dz = (22)/3.28;
+target.dy = (0)/3.28;
+target.dz = 100/11.61;%(22)/3.28;
 
 %set the initial projectile velocity
 init.speed = 300/3.28;
@@ -36,7 +36,8 @@ guess.t = 1;
 
 %pack constants
 params.c = alpha;                       
-params.nGrid = arrsize;    
+params.nGrid = arrsize;  
+params.g = 9.81;
 
 % Set up the decision variables and bounds:
 problem.x0 = [guess.phi; guess.theta; guess.t];
@@ -104,7 +105,7 @@ s0 = [x0;y0;z0;dx0;dy0;dz0];  %Assemble initial dynamical state for simulation
 
 t = linspace(0,T,params.nGrid);  %Build grid in time
 
-s = rk4_blaster(t,s0,params.c); %Simulate the trajectory
+s = rk4_blaster(t,s0,params.c,params.g); %Simulate the trajectory
 
 xFinal = s(1,end);
 yFinal = s(2,end);

@@ -8,16 +8,20 @@ m = 1.3e-3;                             %kg
 a = 0.5 * rho * c_d * A / m;
 g = 9.81;                               % gravitational acceleration
 
-v_0 = 140/3.28;                     
-phi = 3.58;                                
+v_0 = 300/3.28;                     
+phi = 2;                                
 theta = 0;
 
 v_x_0 = v_0 * cos(phi * pi/180) * cos(theta * pi/180);
 v_y_0 = v_0 * sin(phi * pi/180) * cos(theta * pi/180);
 v_z_0 = v_0 * sin(theta * pi/180);
 
-tspan = [0 5];
-[t_sol, x_sol] = ode45(@(t,x) drag_ode_fun(t,x,a,g), tspan, [0, 0, 0, v_x_0, v_y_0, v_z_0]);
+s0 = [0; 0; 0; v_x_0; v_y_0; v_z_0];
+
+t_sol = linspace(0, 1, 100);
+%[t_sol, x_sol] = ode45(@(t,x) drag_ode_fun(t,x,a,g), t_sol, [0, 0, 0, v_x_0, v_y_0, v_z_0]);
+x_sol = rk4_blaster(t_sol, s0, a, g)';
+x_sol_m = x_sol;
 x_sol = x_sol * 3.28;
 
 figure; 
