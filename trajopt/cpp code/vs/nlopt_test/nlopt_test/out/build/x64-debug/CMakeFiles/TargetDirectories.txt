@@ -1,0 +1,3 @@
+C:/Users/Michael/Documents/GitHub/mike/trajopt/cpp code/nlopt_test/nlopt_test/out/build/x64-debug/CMakeFiles/nlopt_test.dir
+C:/Users/Michael/Documents/GitHub/mike/trajopt/cpp code/nlopt_test/nlopt_test/out/build/x64-debug/CMakeFiles/edit_cache.dir
+C:/Users/Michael/Documents/GitHub/mike/trajopt/cpp code/nlopt_test/nlopt_test/out/build/x64-debug/CMakeFiles/rebuild_cache.dir

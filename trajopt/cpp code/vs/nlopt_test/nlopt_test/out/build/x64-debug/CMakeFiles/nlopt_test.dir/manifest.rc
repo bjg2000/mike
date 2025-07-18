@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+1 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "C:/Users/Michael/Documents/GitHub/mike/trajopt/cpp code/nlopt_test/nlopt_test/out/build/x64-debug/CMakeFiles/nlopt_test.dir/embed.manifest"
