@@ -60,7 +60,7 @@ int main(int, char**){
     printf("\n");
 
     for (int i = 0; i < gridsize; i++) {
-        printf("%f\n", dartpath[i].x);
+        printf("%f\n", dartpath[i].y);
     }
 
     return 0;

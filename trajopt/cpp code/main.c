@@ -63,7 +63,7 @@ int main()
     printf("\n");
 
     for (int i = 0; i < gridsize; i++) {
-        printf("%f\n", dartpath[i].x);
+        printf("%f\n", dartpath[i].x*3.28);
     }
 
     return 0;
