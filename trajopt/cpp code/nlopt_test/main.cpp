@@ -55,6 +55,7 @@ int main() {
 }
 */
 
+
 //C CODE
 #include <stdio.h>
 #include <math.h>
@@ -85,10 +86,10 @@ double myconstraint(unsigned n, const double* x, double* grad, void* data)
 }
 
 int main() {
-    double lb[2] = { -HUGE_VAL, 0 }; /* lower bounds */
+    double lb[2] = { -HUGE_VAL, 0 }; // lower bounds 
     nlopt_opt opt;
 
-    opt = nlopt_create(NLOPT_LD_MMA, 2); /* algorithm and dimensionality */
+    opt = nlopt_create(NLOPT_LD_MMA, 2); // algorithm and dimensionality 
     nlopt_set_lower_bounds(opt, lb);
     nlopt_set_min_objective(opt, myfunc, NULL);
 
@@ -99,8 +100,8 @@ int main() {
 
     nlopt_set_xtol_rel(opt, 1e-4);
 
-    double x[2] = { 1.234, 5.678 };  /* `*`some` `initial` `guess`*` */
-    double minf; /* `*`the` `minimum` `objective` `value,` `upon` `return`*` */
+    double x[2] = { 1.234, 5.678 };  // `*`some` `initial` `guess`*` 
+    double minf; // `*`the` `minimum` `objective` `value,` `upon` `return`*` 
     if (nlopt_optimize(opt, x, &minf) < 0) {
         printf("nlopt failed!\n");
     }
@@ -109,4 +110,6 @@ int main() {
     }
 
     nlopt_destroy(opt);
+
+    return 0;
 }
