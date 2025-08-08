@@ -1,7 +1,0 @@
-﻿  rk4_dart.cpp
-C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\rk4_dart\rk4_dart.cpp(24,1): warning C4326: return type of 'main' should be 'int' instead of 'void'
-C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\rk4_dart\rk4_dart.cpp(58,22): warning C4101: 'k2': unreferenced local variable
-C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\rk4_dart\rk4_dart.cpp(58,36): warning C4101: 'k4': unreferenced local variable
-C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\rk4_dart\rk4_dart.cpp(58,15): warning C4101: 'k1': unreferenced local variable
-C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\rk4_dart\rk4_dart.cpp(58,29): warning C4101: 'k3': unreferenced local variable
-  rk4_dart.vcxproj -> C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\rk4_dart\x64\Debug\rk4_dart.exe

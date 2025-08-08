@@ -1,0 +1,1 @@
+C:\Users\xxkin\Documents\GitHub\mike\trajopt\cpp code\nlopt_test\x64\Debug\nlopt_test.exe
