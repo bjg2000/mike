@@ -7,13 +7,13 @@ alpha = 0.5 * rho * c_d * A / m;        %drag function constant
 arrsize = 100;                          %grid discretization  
 
 % Set the target (assuming that the trajectory starts at x=0, y=0, z=0)
-target.x0 = (150)/3.28;  
+target.x0 = (120)/3.28;  
 target.y0 = (0)/3.28;
 target.z0 = (0)/3.28;
 
 target.dx = (0)/3.28;
 target.dy = (0)/3.28;
-target.dz = 100/11.61;%(22)/3.28;
+target.dz = (10)/3.28;%(22)/3.28;
 
 %set the initial projectile velocity
 init.speed = 300/3.28;
