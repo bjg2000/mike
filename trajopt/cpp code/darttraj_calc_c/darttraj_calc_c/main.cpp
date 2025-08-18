@@ -113,9 +113,9 @@ void myconstraint(unsigned m, double *result, unsigned n, const double* x, doubl
 
     rk4_blaster(dartpath, alpha, 9.81);
 
-    result[0] = dartpath[gridsize - 1].x - (target_init.x - target_init.dx * T);
-    result[1] = dartpath[gridsize - 1].y - (target_init.y - target_init.dy * T);
-    result[2] = dartpath[gridsize - 1].z - (target_init.z - target_init.dz * T);
+    result[0] = dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
+    result[1] = dartpath[gridsize - 1].y - (target_init.y + target_init.dy * T);
+    result[2] = dartpath[gridsize - 1].z - (target_init.z + target_init.dz * T);
 }
 
 int main() {
@@ -130,6 +130,7 @@ int main() {
     nlopt_set_lower_bounds(opt, lb);
     nlopt_set_upper_bounds(opt, ub);
     nlopt_set_min_objective(opt, myfunc, NULL);
+    nlopt_set_maxeval(opt, 100);
 
     //elevation angle guess
     double guessphi = 0 * PI / 180;
@@ -144,32 +145,32 @@ int main() {
     double v_init = 300/3.28;
     double alpha = 0.044305;
     traj inittarget;
-    inittarget.x = 120 / 3.28;
+    inittarget.x = 170 / 3.28;
     inittarget.y = 0 / 3.28;
     inittarget.z = 0 / 3.28;
     inittarget.dx = 0 / 3.28;
     inittarget.dy = 0 / 3.28;
-    inittarget.dz = 10 / 3.28;
+    inittarget.dz = 0 / 3.28;
 
     my_constraint_data data[3] = { v_init, 0.044305 , inittarget };
 
-    double tol[3] = {1e-4, 1e-4, 1e-4};
+    double tol[3] = {1e-8, 1e-8, 1e-8};
     nlopt_add_equality_mconstraint(opt, 3, myconstraint, &data, tol);
 
-    nlopt_set_xtol_rel(opt, 1e-4);
+    nlopt_set_xtol_rel(opt, 1e-8);
 
     double x[3] = { guessphi, guesstheta, guesst };  // `*`some` `initial` `guess`*` 
     double minf; // `*`the` `minimum` `objective` `value,` `upon` `return`*` 
 
     
+    int result = nlopt_optimize(opt, x, &minf);
+    //printf("%d\n", result);
+    //printf("%d\n", nlopt_get_numevals(opt));
 
 
-    if (nlopt_optimize(opt, x, &minf) < 0) {
-        printf("nlopt failed!\n");
-    }
-    else {
+    if ((result != 6) && (result > 0)) {
         //printf("found minimum at f(%g,%g,%g) = %0.10g\n", x[0], x[1], x[2], minf);
-        
+        //printf("\r\n");
         traj target_hit[gridsize];
         target_hit[0].x = 0;
         target_hit[0].y = 0;
@@ -184,8 +185,12 @@ int main() {
         printf("target hit at(%g, %g, %g) feet\n", target_hit[gridsize - 1].x * 3.28, target_hit[gridsize - 1].y * 3.28, target_hit[gridsize - 1].z * 3.28);
         printf("with elevation %g degrees, and lead %g degrees\n", x[0] * 180 / PI, x[1] * 180 / PI);
         printf("time to target: %g seconds\n", x[2]);
-        
     }
+    else {
+        //printf("\r\n");
+        printf("nlopt failed!\n");
+    }
+
     clock_t end = clock();
     printf("time to calculate solution: %lf ms\n", (double)(end - begin) / CLOCKS_PER_SEC * 1000);
     nlopt_destroy(opt);

@@ -1,0 +1,12 @@
+x: has the initial guesses for phi, theta, and t
+data:
+	a: dart initial velocity
+	b: alpha parameter (includes ballistic coefficient & dart mass)
+	c: target initial params
+
+in constraint function:
+result: where the calculated output constraints are stored
+
+
+
+
