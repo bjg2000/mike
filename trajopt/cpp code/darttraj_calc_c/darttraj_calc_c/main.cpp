@@ -83,13 +83,43 @@ void linspace(traj* arr, double n)
     }
 }
 
+unsigned int tol_check(double value_actual, double value_theoretical, double tol) {
+    double lower_bound = value_theoretical - tol;
+    double upper_bound = value_theoretical + tol;
+
+    if ((value_actual < lower_bound) || (value_actual > upper_bound))
+        return 0;
+    else
+        return 1;
+}
+
+unsigned int tol_pos(traj target, traj* calculated_hit, double tol) {
+    double t_hit = calculated_hit[gridsize - 1].t;
+    double x_hit = calculated_hit[gridsize - 1].x;
+    double y_hit = calculated_hit[gridsize - 1].y;
+    double z_hit = calculated_hit[gridsize - 1].z;
+
+    double x_target_t = target.x + target.dx * t_hit;
+    double y_target_t = target.y + target.dy * t_hit;
+    double z_target_t = target.z + target.dz * t_hit;
+
+    unsigned int x_in_bounds = tol_check(x_hit, x_target_t, tol);
+    unsigned int y_in_bounds = tol_check(y_hit, y_target_t, tol);
+    unsigned int z_in_bounds = tol_check(z_hit, z_target_t, tol);
+
+    if (x_in_bounds && y_in_bounds && z_in_bounds)
+        return 1;
+    else
+        return 0;
+}
+
 //objective function
 double myfunc(unsigned n, const double* x, double* grad, void* my_func_data)
 {
     return x[2];    //return t
 }
 
-//constraint function
+//nonlinear constraint function
 void myconstraint(unsigned m, double *result, unsigned n, const double* x, double* grad, void* data)
 {
     my_constraint_data* d = (my_constraint_data*)data;
@@ -142,17 +172,17 @@ int main() {
     double guesst = 1;
 
     //init params
-    double v_init = 300/3.28;
+    double v_init = 190/3.28;
     double alpha = 0.044305;
-    traj inittarget;
-    inittarget.x = 170 / 3.28;
-    inittarget.y = 0 / 3.28;
-    inittarget.z = 0 / 3.28;
-    inittarget.dx = 0 / 3.28;
-    inittarget.dy = 0 / 3.28;
-    inittarget.dz = 0 / 3.28;
+    traj target;
+    target.x = 120 / 3.28;
+    target.y = 0 / 3.28;
+    target.z = 0 / 3.28;
+    target.dx = 0 / 3.28;
+    target.dy = 0 / 3.28;
+    target.dz = 0 / 3.28;
 
-    my_constraint_data data[3] = { v_init, 0.044305 , inittarget };
+    my_constraint_data data[3] = { v_init, 0.044305 , target };
 
     double tol[3] = {1e-8, 1e-8, 1e-8};
     nlopt_add_equality_mconstraint(opt, 3, myconstraint, &data, tol);
@@ -162,14 +192,11 @@ int main() {
     double x[3] = { guessphi, guesstheta, guesst };  // `*`some` `initial` `guess`*` 
     double minf; // `*`the` `minimum` `objective` `value,` `upon` `return`*` 
 
-    
     int result = nlopt_optimize(opt, x, &minf);
     //printf("%d\n", result);
     //printf("%d\n", nlopt_get_numevals(opt));
 
-
-    if ((result != 6) && (result > 0)) {
-        //printf("found minimum at f(%g,%g,%g) = %0.10g\n", x[0], x[1], x[2], minf);
+    if (result > 0) {
         //printf("\r\n");
         traj target_hit[gridsize];
         target_hit[0].x = 0;
@@ -178,13 +205,18 @@ int main() {
         target_hit[0].dx = v_init * cos(x[0]) * cos(x[1]);
         target_hit[0].dy = v_init * sin(x[0]) * cos(x[1]);
         target_hit[0].dz = v_init * sin(x[1]);
-
         linspace(target_hit, x[2]);
         rk4_blaster(target_hit, alpha, 9.81);
 
-        printf("target hit at(%g, %g, %g) feet\n", target_hit[gridsize - 1].x * 3.28, target_hit[gridsize - 1].y * 3.28, target_hit[gridsize - 1].z * 3.28);
-        printf("with elevation %g degrees, and lead %g degrees\n", x[0] * 180 / PI, x[1] * 180 / PI);
-        printf("time to target: %g seconds\n", x[2]);
+        //make sure converged solution hits target within 3 inch radius 
+        if (tol_pos(target, target_hit, 0.25)) {
+            printf("target hit at (%.2f, %.2f, %.2f) feet\n", target_hit[gridsize - 1].x * 3.28, target_hit[gridsize - 1].y * 3.28, target_hit[gridsize - 1].z * 3.28);
+            printf("with elevation %.2f degrees, and lead %.2f degrees\n", x[0] * 180 / PI, x[1] * 180 / PI);
+            printf("time to target: %g seconds\n", x[2]);
+        }
+        else {
+            printf("nlopt failed!\n");
+        }
     }
     else {
         //printf("\r\n");
@@ -194,6 +226,4 @@ int main() {
     clock_t end = clock();
     printf("time to calculate solution: %lf ms\n", (double)(end - begin) / CLOCKS_PER_SEC * 1000);
     nlopt_destroy(opt);
-
-    return 0;
 }
