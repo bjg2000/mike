@@ -15,16 +15,16 @@ arrsize = 100;                          %grid discretization
 % target.dy = (0)/3.28;
 % target.dz = (30)/3.28;%(22)/3.28;
 
-target.x0 = (80)/3.28;  
+target.x0 = (180)/3.28;  
 target.y0 = (0)/3.28;
 target.z0 = (0)/3.28;
 
-target.dx = (0)/3.28;
+target.dx = (5)/3.28;
 target.dy = (0)/3.28;
-target.dz = (30)/3.28;%(22)/3.28;
+target.dz = (15)/3.28;%(22)/3.28;
 
 %set the initial projectile velocity
-init.speed = 200/3.28;
+init.speed = 190/3.28;
 
 %init guesses
 init.anglephi = 2*pi/180;       %2 degrees for ranges 100 feet or less on level ground at 300fps
