@@ -1,25 +1,4 @@
-#include <stdio.h>
-#include <math.h>
-#include <nlopt.h>
-#include <time.h>
-
-#define gridsize 100
-#define PI 3.141592
-
-struct traj {
-    double t;
-    double x;
-    double y;
-    double z;
-    double dx;
-    double dy;
-    double dz;
-};
-
-typedef struct {
-    double a, b;
-    traj c;
-} my_constraint_data;
+#include "darttrajcalc.h"
 
 void dartdrag(traj s, double* dx, double a, double g)
 {
@@ -83,7 +62,8 @@ void linspace(traj* arr, double n)
     }
 }
 
-unsigned int tol_check(double value_actual, double value_theoretical, double tol) {
+unsigned int tol_check(double value_actual, double value_theoretical, double tol)
+{
     double lower_bound = value_theoretical - tol;
     double upper_bound = value_theoretical + tol;
 
@@ -93,7 +73,8 @@ unsigned int tol_check(double value_actual, double value_theoretical, double tol
         return 1;
 }
 
-unsigned int tol_pos(traj target, traj* calculated_hit, double tol) {
+unsigned int tol_pos(traj target, traj* calculated_hit, double tol)
+{
     double t_hit = calculated_hit[gridsize - 1].t;
     double x_hit = calculated_hit[gridsize - 1].x;
     double y_hit = calculated_hit[gridsize - 1].y;
@@ -120,7 +101,7 @@ double myfunc(unsigned n, const double* x, double* grad, void* my_func_data)
 }
 
 //nonlinear constraint function
-void myconstraint(unsigned m, double *result, unsigned n, const double* x, double* grad, void* data)
+void myconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data)
 {
     my_constraint_data* d = (my_constraint_data*)data;
 
@@ -148,22 +129,8 @@ void myconstraint(unsigned m, double *result, unsigned n, const double* x, doubl
     result[2] = dartpath[gridsize - 1].z - (target_init.z + target_init.dz * T);
 }
 
-int main() {
-
-    //init params (these are passed to the function from the main program)
-    //------------------------------------------------------------------------------------------------------------------------------
-    double v_init = 190 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000;
-    traj target;
-    target.x = 141 / 3.28;
-    target.y = 0 / 3.28;
-    target.z = 0 / 3.28;
-    target.dx = 0 / 3.28;
-    target.dy = 0 / 3.28;
-    target.dz = 0 / 3.28;
-    //------------------------------------------------------------------------------------------------------------------------------
-
-    clock_t begin = clock();
-
+traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m)
+{
     double lb[3] = { -(90 * PI / 180) , -(90 * PI / 180), 0 }; // lower bounds 
     double ub[3] = { (90 * PI / 180) , (90 * PI / 180), 5 }; // upper bounds 
     nlopt_opt opt;
@@ -183,10 +150,17 @@ int main() {
     //time to target guess
     double guesst = 1;
 
+    //setup output data struct
+    traj_calc_output outputdata;
+    outputdata.phi = guessphi;
+    outputdata.theta = guesstheta;
+    outputdata.theta = guesst;
+    outputdata.success = 0;
+
     double alpha = 0.5 * rho * c_d * A / m;
     my_constraint_data data[3] = { v_init, alpha , target };
 
-    double tol[3] = {1e-8, 1e-8, 1e-8};
+    double tol[3] = { 1e-8, 1e-8, 1e-8 };
     nlopt_add_equality_mconstraint(opt, 3, myconstraint, &data, tol);
 
     nlopt_set_xtol_rel(opt, 1e-8);
@@ -196,7 +170,8 @@ int main() {
 
     int result = nlopt_optimize(opt, x, &minf);
 
-    if (result > 0) {
+    if (result > 0)
+    {
         traj target_hit[gridsize];
         target_hit[0].x = 0;
         target_hit[0].y = 0;
@@ -208,21 +183,15 @@ int main() {
         rk4_blaster(target_hit, alpha, 9.81);
 
         //make sure converged solution hits target within 3 inch radius 
-        if (tol_pos(target, target_hit, 0.25/3.28)) {
-            printf("target hit at (%.2f, %.2f, %.2f) feet\n", target_hit[gridsize - 1].x * 3.28, target_hit[gridsize - 1].y * 3.28, target_hit[gridsize - 1].z * 3.28);
-            printf("with elevation %.2f degrees, and lead %.2f degrees\n", x[0] * 180 / PI, x[1] * 180 / PI);
-            printf("time to target: %.2f seconds\n", x[2]);
+        if (tol_pos(target, target_hit, 0.25 / 3.28))
+        {
+            outputdata.phi = x[0];
+            outputdata.theta = x[1];
+            outputdata.timetotarget = x[2];
+            outputdata.success = 1;
         }
-        else {
-            printf("nlopt failed!\n");
-        }
-    }
-    else {
-        printf("nlopt failed!\n");
     }
 
     nlopt_destroy(opt);
-
-    clock_t end = clock();
-    printf("time to calculate solution: %lf ms\n", (double)(end - begin) / CLOCKS_PER_SEC * 1000);
+    return outputdata;
 }
