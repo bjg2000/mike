@@ -19,7 +19,7 @@ void main()
 
     clock_t begin = clock();
 
-    traj_calc_output dart_hit = traj_calc(target, v_init, rho, c_d, A, m);;
+    traj_calc_output dart_hit = traj_calc(target, v_init, rho, c_d, A, m);
 
     /*
     traj target_hit[gridsize];
