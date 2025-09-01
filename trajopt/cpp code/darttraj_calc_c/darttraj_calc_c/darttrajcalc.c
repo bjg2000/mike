@@ -182,7 +182,7 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
         linspace(target_hit, x[2]);
         rk4_blaster(target_hit, alpha, 9.81);
 
-        //make sure converged solution hits target within 3 inch radius 
+        //make sure converged solution hits target within 3 inch radius
         if (tol_pos(target, target_hit, 0.25 / 3.28))
         {
             outputdata.phi = x[0];
