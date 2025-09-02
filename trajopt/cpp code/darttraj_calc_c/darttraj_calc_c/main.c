@@ -7,9 +7,9 @@ void main()
 {
     //init params (these are passed to the function from the main program)
     //------------------------------------------------------------------------------------------------------------------------------
-    double v_init = 300 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000;
+    double v_init = 200 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000;
     traj target;
-    target.x = 155 / 3.28;
+    target.x = 143 / 3.28;
     target.y = 0 / 3.28;
     target.z = 0 / 3.28;
     target.dx = 0 / 3.28;
@@ -17,34 +17,38 @@ void main()
     target.dz = 0 / 3.28;
     //------------------------------------------------------------------------------------------------------------------------------
 
+    //algorithm must hit a pole when target.x < 20, this is a band-aid
+    if (target.x < 20 / 3.28) {
+        target.x = 20 / 3.28;
+    }
+
     clock_t begin = clock();
 
     traj_calc_output dart_hit = traj_calc(target, v_init, rho, c_d, A, m);
-    
 
     if (dart_hit.success)
     {
-
-        printf("elevation %.2f degrees and lead %.2f degrees\n", dart_hit.phi * 180 / PI, dart_hit.theta * 180 / PI);
-        printf("time to target: %.2f seconds\n", dart_hit.timetotarget);
-
+        printf("Target hit!\n");
     }
     else
     {
         printf("Target out of range!\n");
     }
 
-    traj target_hit[gridsize];
-    target_hit[0].x = 0;
-    target_hit[0].y = 0;
-    target_hit[0].z = 0;
-    target_hit[0].dx = v_init * cos(dart_hit.phi) * cos(dart_hit.theta);
-    target_hit[0].dy = v_init * sin(dart_hit.phi) * cos(dart_hit.theta);
-    target_hit[0].dz = v_init * sin(dart_hit.theta);
-    linspace(target_hit, dart_hit.timetotarget);
-    rk4_blaster(target_hit, 0.5 * rho * c_d * A / m, 9.81);
-    printf("last dart position at (%.2f, %.2f, %.2f) feet\n", target_hit[gridsize - 1].x * 3.28, target_hit[gridsize - 1].y * 3.28, target_hit[gridsize - 1].z * 3.28);
-    printf("target position at (%.2f, %.2f, %.2f) feet\n", (target.x + target.dx * target_hit[gridsize - 1].t) * 3.28, (target.y + target.dy * target_hit[gridsize - 1].t) * 3.28, (target.z + target.dz * target_hit[gridsize - 1].t) * 3.28);
+    printf("elevation %.2f degrees and lead %.2f degrees\n", dart_hit.phi * 180 / PI, dart_hit.theta * 180 / PI);
+    printf("time to targetx position: %.2f seconds\n", dart_hit.timetotarget);
+
+    traj dart_end[gridsize];
+    dart_end[0].x = 0;
+    dart_end[0].y = 0;
+    dart_end[0].z = 0;
+    dart_end[0].dx = v_init * cos(dart_hit.phi) * cos(dart_hit.theta);
+    dart_end[0].dy = v_init * sin(dart_hit.phi) * cos(dart_hit.theta);
+    dart_end[0].dz = v_init * sin(dart_hit.theta);
+    linspace(dart_end, dart_hit.timetotarget);
+    rk4_blaster(dart_end, 0.5 * rho * c_d * A / m, 9.81);
+    printf("last dart position at (%.2f, %.2f, %.2f) feet\n", dart_end[gridsize - 1].x * 3.28, dart_end[gridsize - 1].y * 3.28, dart_end[gridsize - 1].z * 3.28);
+    printf("target position at (%.2f, %.2f, %.2f) feet\n", (target.x + target.dx * dart_end[gridsize - 1].t) * 3.28, (target.y + target.dy * dart_end[gridsize - 1].t) * 3.28, (target.z + target.dz * dart_end[gridsize - 1].t) * 3.28);
 
     clock_t end = clock();
     printf("calculation time: %f ms\n", (double)(end - begin) / CLOCKS_PER_SEC * 1000);

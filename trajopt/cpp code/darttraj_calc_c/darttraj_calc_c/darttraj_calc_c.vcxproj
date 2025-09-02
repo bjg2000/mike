@@ -147,7 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="darttrajcalc.c" />
+    <ClCompile Include="darttrajcalc_v3.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>

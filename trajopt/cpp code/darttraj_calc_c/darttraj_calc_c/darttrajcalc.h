@@ -17,6 +17,7 @@ typedef struct {
 typedef struct {
     double a, b;
     traj c;
+    traj* d;
 } my_constraint_data;
 
 typedef struct {
@@ -30,5 +31,10 @@ void linspace(traj* arr, double n);
 unsigned int tol_check(double value_actual, double value_theoretical, double tol);
 unsigned int tol_pos(traj target, traj* calculated_hit, double tol);
 double myfunc(unsigned n, const double* x, double* grad, void* my_func_data);
-void myconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data);
+//void myconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data);
 traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m);
+
+double myconstraint(unsigned n, const double* x, double* grad, void* data);
+//void myxconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data);
+//void myyzconstraint1(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data);
+//void myyzconstraint2(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data);
