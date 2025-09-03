@@ -73,7 +73,7 @@ unsigned int tol_check(double value_actual, double value_theoretical, double tol
         return 1;
 }
 
-unsigned int tol_pos(traj target, traj* calculated_hit, double tol)
+unsigned int tol_pos(traj target, traj* calculated_hit, double tol_h, double tol_v)
 {
     double t_hit = calculated_hit[gridsize - 1].t;
     double y_hit = calculated_hit[gridsize - 1].y;
@@ -82,8 +82,8 @@ unsigned int tol_pos(traj target, traj* calculated_hit, double tol)
     double y_target_t = target.y + target.dy * t_hit;
     double z_target_t = target.z + target.dz * t_hit;
 
-    unsigned int y_in_bounds = tol_check(y_hit, y_target_t, tol);
-    unsigned int z_in_bounds = tol_check(z_hit, z_target_t, tol);
+    unsigned int y_in_bounds = tol_check(y_hit, y_target_t, tol_v);
+    unsigned int z_in_bounds = tol_check(z_hit, z_target_t, tol_h);
 
     if (y_in_bounds && z_in_bounds)
         return 1;
@@ -121,8 +121,12 @@ double myfunc(unsigned n, const double* x, double* grad, void* my_func_data)
     //shot_guess.x = dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
     shot_guess.y = dartpath[gridsize - 1].y - (target_init.y + target_init.dy * T);
     shot_guess.z = dartpath[gridsize - 1].z - (target_init.z + target_init.dz * T);
+    
+    //define target height and width
+    double target_height = 6 / 3.28;
+    double target_width = 3 / 3.28;
 
-    double obj_output_val = T + sqrt(shot_guess.y * shot_guess.y + shot_guess.z * shot_guess.z); //minimize this
+    double obj_output_val = T + sqrt(pow(shot_guess.y / target_height, 2) + pow(shot_guess.z / target_width, 2)); //minimize this
     //printf("objective function value: %0.6f\n", obj_output_val);
 
     return obj_output_val;    
@@ -176,7 +180,6 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
     outputdata.theta = guesst;
     outputdata.success = 0;
 
-
     double tol[3] = { 1e-8, 1e-8, 1e-8 };
 
 
@@ -213,8 +216,8 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
 
     if (result > 0) {
 
-        //make sure converged solution hits target within 3 inch radius on y and z axes
-        if (tol_pos(target, dart_end, 0.25 / 3.28))
+        //make sure converged solution hits target within 3 inches on z axis and 6 inches on y axis
+        if (tol_pos(target, dart_end, 0.25 / 3.28, 0.5 / 3.28))
         {
             outputdata.success = 1;
         }
