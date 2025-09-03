@@ -9,7 +9,7 @@ void main()
     //------------------------------------------------------------------------------------------------------------------------------
     double v_init = 200 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000;
     traj target;
-    target.x = 143 / 3.28;
+    target.x = 140 / 3.28;
     target.y = 0 / 3.28;
     target.z = 0 / 3.28;
     target.dx = 0 / 3.28;
@@ -17,9 +17,15 @@ void main()
     target.dz = 0 / 3.28;
     //------------------------------------------------------------------------------------------------------------------------------
 
-    //algorithm must hit a pole when target.x < 20, this is a band-aid
-    if (target.x < 20 / 3.28) {
-        target.x = 20 / 3.28;
+    //algorithm hits a pole when target == 0
+    if (target.x == 0) {
+        target.x = 1e-3;
+    }
+    if (target.y == 0) {
+        target.y = 1e-3;
+    }
+    if (target.z == 0) {
+        target.z = 1e-3;
     }
 
     clock_t begin = clock();
@@ -36,7 +42,7 @@ void main()
     }
 
     printf("elevation %.2f degrees and lead %.2f degrees\n", dart_hit.phi * 180 / PI, dart_hit.theta * 180 / PI);
-    printf("time to targetx position: %.2f seconds\n", dart_hit.timetotarget);
+    printf("time to target x position: %.2f seconds\n", dart_hit.timetotarget);
 
     traj dart_end[gridsize];
     dart_end[0].x = 0;

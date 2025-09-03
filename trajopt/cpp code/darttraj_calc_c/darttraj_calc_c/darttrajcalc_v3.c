@@ -122,14 +122,14 @@ double myfunc(unsigned n, const double* x, double* grad, void* my_func_data)
     shot_guess.y = dartpath[gridsize - 1].y - (target_init.y + target_init.dy * T);
     shot_guess.z = dartpath[gridsize - 1].z - (target_init.z + target_init.dz * T);
 
-    double obj_output_val = -T/sqrt(1 + shot_guess.y * shot_guess.y + shot_guess.z * shot_guess.z);
+    double obj_output_val = T + sqrt(shot_guess.y * shot_guess.y + shot_guess.z * shot_guess.z); //minimize this
     //printf("objective function value: %0.6f\n", obj_output_val);
 
-    return obj_output_val;    //minimize 
+    return obj_output_val;    
 }
 
 //nonlinear constraint function
-double myconstraint(unsigned n, const double* x, double* grad, void* data)
+double myxconstraint(unsigned n, const double* x, double* grad, void* data)
 {
     my_constraint_data* d = (my_constraint_data*)data;
 
@@ -180,7 +180,7 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
     double tol[3] = { 1e-8, 1e-8, 1e-8 };
 
 
-    nlopt_add_equality_constraint(opt, myconstraint, &data, 1e-8);
+    nlopt_add_equality_constraint(opt, myxconstraint, &data, 1e-8);
 
     //nlopt_set_xtol_rel(opt, 1e-8);
 
