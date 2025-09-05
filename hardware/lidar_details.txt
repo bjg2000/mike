@@ -1,0 +1,5 @@
+model: LW20/C
+connector: 08SUR-32S (JST-SUR-08)
+wire gauge: 32 AWG
+protocol: UART or I2C, logic level 3V3 but are 5V tolerant
+power: 5V
