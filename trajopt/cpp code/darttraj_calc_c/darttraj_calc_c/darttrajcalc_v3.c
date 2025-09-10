@@ -89,11 +89,20 @@ double myfunc(unsigned n, const double* x, double* grad, void* my_func_data)
     rk4_blaster(dartpath, alpha, 9.81);
     d->d = dartpath;
 
-    //shot_guess.x = dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
+    shot_guess.x = dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
     shot_guess.y = dartpath[gridsize - 1].y - (target_init.y + target_init.dy * T);
     shot_guess.z = dartpath[gridsize - 1].z - (target_init.z + target_init.dz * T);
 
-    double obj_output_val = T + pow(shot_guess.y, 2) + pow(shot_guess.z, 2); //minimize this
+    ///printf("deviation (y, z): %f, %f\n", shot_guess.y, shot_guess.z);
+
+    //double phi_deg = x[0] * 180 / PI;
+    //double theta_deg = x[1] * 180 / PI;
+
+    double obj_output_val = (pow(shot_guess.y, 2) + pow(shot_guess.z, 2));
+
+    //double obj_output_val = T * 1000 * (pow(shot_guess.y, 2) + pow(shot_guess.z, 2)) - 1 / (1 / shot_guess.x + fmod(phi_deg, 0.3)) - 1 / (1 / shot_guess.x + fmod(theta_deg, 0.3));
+
+    //double obj_output_val = T * target_init.x * 1000 * (pow(shot_guess.y, 2) + pow(shot_guess.z, 2)) - 1 / (0.01 + pow(tan(PI * phi_deg / 0.3), 2)); //minimize this
     //printf("objective function value: %0.6f\n", obj_output_val);
 
     return obj_output_val;    
@@ -115,6 +124,29 @@ double myxconstraint(unsigned n, const double* x, double* grad, void* data)
     return dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
 }
 
+double myphiconstraint(unsigned n, const double* x, double* grad, void* data)
+{
+    double phi_deg = x[0] * 180 / PI;
+
+    //double val = fmod(phi_deg, 0.1);
+    //printf("%f, %f\n", phi_deg, val);
+    
+    //int int_phi = round(phi_deg * 100);
+    //double val = (double)(int_phi % 100);
+    //printf("%f, %d, %f\n", phi_deg, int_phi, val/100);
+    
+    //return pow(tan(PI * phi_deg / 0.3), 2);
+    return fmod(phi_deg, 0.3);
+}
+
+double mythetaconstraint(unsigned n, const double* x, double* grad, void* data)
+{
+    double theta_deg = x[1] * 180 / PI;
+
+    //return tan(PI * theta_deg / 0.3), 1);
+    return fmod(theta_deg, 0.3);
+}
+
 traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m)
 {
     double lb[3] = { -(90 * PI / 180) , -(90 * PI / 180), 0 }; // lower bounds 
@@ -132,7 +164,7 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
     nlopt_set_maxeval(opt, 1000);
 
     //elevation angle guess
-    double guessphi = 0 * PI / 180;
+    double guessphi = 2 * PI / 180;
 
     //lead angle guess
     double guesstheta = 0 * PI / 180;
@@ -150,8 +182,10 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
     //double tol[3] = { 1e-8, 1e-8, 1e-8 };
 
     nlopt_add_equality_constraint(opt, myxconstraint, &data, 1e-8);
+    //nlopt_add_equality_constraint(opt, myphiconstraint, &data, 1e-8);
+    //nlopt_add_equality_constraint(opt, mythetaconstraint, &data, 1e-8);
 
-    //nlopt_set_xtol_rel(opt, 1e-8);
+    //nlopt_set_xtol_rel(opt, 0.1);
 
     double x[3] = { guessphi, guesstheta, guesst };  // `*`some` `initial` `guess`*` 
     double minf; // `*`the` `minimum` `objective` `value,` `upon` `return`*` 

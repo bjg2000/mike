@@ -1,5 +1,6 @@
 #include <math.h>
 #include <nlopt.h>
+#include <stdio.h>
 
 #define gridsize 100
 #define PI 3.14159265358979323846
@@ -33,3 +34,5 @@ void myconstraint(unsigned m, double* result, unsigned n, const double* x, doubl
 traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m);
 
 double myxconstraint(unsigned n, const double* x, double* grad, void* data);
+double myphiconstraint(unsigned n, const double* x, double* grad, void* data);
+double mythetaconstraint(unsigned n, const double* x, double* grad, void* data);
