@@ -7,7 +7,7 @@ void main()
 {
     //init params (these are passed to the function from the main program)
     //------------------------------------------------------------------------------------------------------------------------------
-    double v_init = 300 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000;
+    double v_init = 300 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000, angle_round = 0.3;
     traj target;
     target.x = 100 / 3.28;
     target.y = 0 / 3.28;
@@ -30,7 +30,7 @@ void main()
 
     clock_t begin = clock();
 
-    traj_calc_output dart_hit = traj_calc(target, v_init, rho, c_d, A, m);
+    traj_calc_output dart_hit = traj_calc(target, v_init, rho, c_d, A, m, angle_round);
 
     if (dart_hit.success)
     {

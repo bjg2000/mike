@@ -31,7 +31,7 @@ void rk4_blaster(traj* s, double a, double g);
 void linspace(traj* arr, double n);
 double myfunc(unsigned n, const double* x, double* grad, void* my_func_data);
 void myconstraint(unsigned m, double* result, unsigned n, const double* x, double* grad, void* data);
-traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m);
+traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m, double angle_round);
 
 double myxconstraint(unsigned n, const double* x, double* grad, void* data);
 double myphiconstraint(unsigned n, const double* x, double* grad, void* data);

@@ -89,21 +89,11 @@ double myfunc(unsigned n, const double* x, double* grad, void* my_func_data)
     rk4_blaster(dartpath, alpha, 9.81);
     d->d = dartpath;
 
-    shot_guess.x = dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
+    //shot_guess.x = dartpath[gridsize - 1].x - (target_init.x + target_init.dx * T);
     shot_guess.y = dartpath[gridsize - 1].y - (target_init.y + target_init.dy * T);
     shot_guess.z = dartpath[gridsize - 1].z - (target_init.z + target_init.dz * T);
 
-    ///printf("deviation (y, z): %f, %f\n", shot_guess.y, shot_guess.z);
-
-    //double phi_deg = x[0] * 180 / PI;
-    //double theta_deg = x[1] * 180 / PI;
-
     double obj_output_val = (pow(shot_guess.y, 2) + pow(shot_guess.z, 2));
-
-    //double obj_output_val = T * 1000 * (pow(shot_guess.y, 2) + pow(shot_guess.z, 2)) - 1 / (1 / shot_guess.x + fmod(phi_deg, 0.3)) - 1 / (1 / shot_guess.x + fmod(theta_deg, 0.3));
-
-    //double obj_output_val = T * target_init.x * 1000 * (pow(shot_guess.y, 2) + pow(shot_guess.z, 2)) - 1 / (0.01 + pow(tan(PI * phi_deg / 0.3), 2)); //minimize this
-    //printf("objective function value: %0.6f\n", obj_output_val);
 
     return obj_output_val;    
 }
@@ -127,8 +117,14 @@ double myxconstraint(unsigned n, const double* x, double* grad, void* data)
 double myphiconstraint(unsigned n, const double* x, double* grad, void* data)
 {
     double phi_deg = x[0] * 180 / PI;
+    double interval = 0.1;
 
-    //double val = fmod(phi_deg, 0.1);
+    //double val = fmod(phi_deg, interval);
+    //double val = pow(tan(PI * phi_deg / 0.3), 2);
+    double val = sin(PI / interval * phi_deg);
+
+
+
     //printf("%f, %f\n", phi_deg, val);
     
     //int int_phi = round(phi_deg * 100);
@@ -136,7 +132,11 @@ double myphiconstraint(unsigned n, const double* x, double* grad, void* data)
     //printf("%f, %d, %f\n", phi_deg, int_phi, val/100);
     
     //return pow(tan(PI * phi_deg / 0.3), 2);
-    return fmod(phi_deg, 0.3);
+    
+
+    //return sin(PI / interval * phi_deg);
+
+    return val;
 }
 
 double mythetaconstraint(unsigned n, const double* x, double* grad, void* data)
@@ -144,10 +144,13 @@ double mythetaconstraint(unsigned n, const double* x, double* grad, void* data)
     double theta_deg = x[1] * 180 / PI;
 
     //return tan(PI * theta_deg / 0.3), 1);
-    return fmod(theta_deg, 0.3);
+    //return fmod(theta_deg, 0.3);
+    double interval = 0.3;
+
+    return sin(PI / interval * theta_deg) * interval;
 }
 
-traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m)
+traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, double A, double m, double angle_round)
 {
     double lb[3] = { -(90 * PI / 180) , -(90 * PI / 180), 0 }; // lower bounds 
     double ub[3] = { (90 * PI / 180) , (90 * PI / 180), 5 }; // upper bounds 
@@ -158,6 +161,8 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
     my_constraint_data data[3] = { v_init, alpha , target };
 
     opt = nlopt_create(NLOPT_LN_COBYLA, 3); // algorithm and dimensionality 
+    //opt = nlopt_create(NLOPT_LN_BOBYQA, 3); // algorithm and dimensionality 
+
     nlopt_set_lower_bounds(opt, lb);
     nlopt_set_upper_bounds(opt, ub);
     nlopt_set_min_objective(opt, myfunc, &data);
@@ -196,8 +201,12 @@ traj_calc_output traj_calc(traj target, double v_init, double rho, double c_d, d
     //double dart_end_theta = x[1];
 
     //round phi and theta to the nearest 0.1 degrees
-    double dart_end_phi = round(x[0] * 180 / PI * 10.0) / 10.0 * PI / 180;
-    double dart_end_theta = round(x[1] * 180 / PI * 10.0) / 10.0 * PI / 180;
+    //double dart_end_phi = round(x[0] * 180 / PI * 10.0) / 10.0 * PI / 180;
+    //double dart_end_theta = round(x[1] * 180 / PI * 10.0) / 10.0 * PI / 180;
+
+    //round phi and theta to the nearest angle_round degrees
+    double dart_end_phi = round(x[0] * 180 / PI / angle_round) * angle_round * PI / 180;
+    double dart_end_theta = round(x[1] * 180 / PI / angle_round) * angle_round * PI / 180;
 
     //calculate final trajectory
     traj dart_end[gridsize];
