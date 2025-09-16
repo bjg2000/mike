@@ -7,9 +7,9 @@ void main()
 {
     //init params (these are passed to the function from the main program)
     //------------------------------------------------------------------------------------------------------------------------------
-    double v_init = 300 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000, angle_round = 0.3;
+    double v_init = 200 / 3.28, rho = 1.293, c_d = 0.6712, A = PI * (13.0 / 1000.0 / 2.0) * (13.0 / 1000.0 / 2.0), m = 1.3 / 1000, angle_round = 0.3;
     traj target;
-    target.x = 100 / 3.28;
+    target.x = 130 / 3.28;
     target.y = 0 / 3.28;
     target.z = 0 / 3.28;
     target.dx = 0 / 3.28;
