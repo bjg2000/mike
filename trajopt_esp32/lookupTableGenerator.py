@@ -1,0 +1,177 @@
+import numpy as np
+import math
+
+# --- Configuration ---
+# These parameters should match your C++ code's constants.
+V_INIT = 200 / 3.28
+RHO = 1.293
+C_D = 0.6712
+DIAMETER = 13.0 / 1000.0
+A = math.pi * (DIAMETER / 2.0)**2
+M = 1.3 / 1000.0
+G = 9.81
+GRIDSIZE = 100
+ALPHA = 0.5 * RHO * C_D * A / M
+
+# --- Lookup Table Definition ---
+# Define the range and resolution of the target coordinates for the LUT.
+# A higher resolution (more points) gives more accuracy but uses more memory.
+TARGET_X_MIN, TARGET_X_MAX, TARGET_X_POINTS = 5.0, 40.0, 8  # in meters
+TARGET_Y_MIN, TARGET_Y_MAX, TARGET_Y_POINTS = -2.0, 2.0, 5  # in meters
+TARGET_Z_MIN, TARGET_Z_MAX, TARGET_Z_POINTS = -2.0, 2.0, 5  # in meters
+
+
+# --- Physics Simulation (Ported from C++) ---
+
+def dartdrag(s, a, g):
+    """Calculates derivatives for the projectile state."""
+    vel_mag = np.sqrt(s[4]**2 + s[5]**2 + s[6]**2)
+    return np.array([
+        s[4],
+        s[5],
+        s[6],
+        -a * s[4] * vel_mag,
+        -a * s[5] * vel_mag,
+        -a * s[6] * vel_mag - g,
+    ])
+
+def rk4_blaster(s_initial, t_total, a, g):
+    """Propagates trajectory using RK4 method."""
+    path = np.zeros((GRIDSIZE, 7))
+    path[0] = s_initial
+    time_steps = np.linspace(0, t_total, GRIDSIZE)
+
+    for i in range(GRIDSIZE - 1):
+        # Note: s is [t, x, y, z, dx, dy, dz] but dartdrag only needs state vars
+        dt = time_steps[i+1] - time_steps[i]
+        state_i = path[i, 1:] # Extract [x, y, z, dx, dy, dz]
+
+        k1 = dartdrag(state_i, a, g)
+        k2 = dartdrag(state_i + 0.5 * dt * k1, a, g)
+        k3 = dartdrag(state_i + 0.5 * dt * k2, a, g)
+        k4 = dartdrag(state_i + dt * k3, a, g)
+
+        state_next = state_i + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
+        path[i+1, 0] = time_steps[i+1]
+        path[i+1, 1:] = state_next
+
+    return path
+
+def solve_for_target(target_pos):
+    """
+    Performs the slow grid search for a single target position.
+    This is the core of the pre-computation.
+    """
+    min_obj = 1e9
+    best_phi, best_theta, best_t = 0, 0, 1
+    angle_round = 0.3 * math.pi / 180.0
+
+    phi_range = np.arange(-math.pi/18, math.pi/18, angle_round)
+    theta_range = np.arange(-math.pi/18, math.pi/18, angle_round)
+    t_range = np.arange(0.1, 2.0, 0.1)
+
+    for phi in phi_range:
+        for theta in theta_range:
+            for t_final in t_range:
+                # Initial state: t, x, y, z, dx, dy, dz
+                s0 = np.array([
+                    0, 0, 0, 0,
+                    V_INIT * np.cos(phi) * np.cos(theta),
+                    V_INIT * np.sin(phi), # Y is horizontal angle in this model
+                    V_INIT * np.cos(phi) * np.sin(theta)  # Z is vertical angle
+                ])
+                
+                final_path = rk4_blaster(s0, t_final, ALPHA, G)
+                final_pos = final_path[-1]
+
+                # Adjust target pos for projectile flight time
+                target_at_impact = target_pos # Assuming stationary target for LUT
+                
+                # Simplified objective for speed, focused on final x-distance match
+                time_to_target_x = final_pos[0] * target_pos[0] / final_pos[1] if final_pos[1] > 0 else 0
+                
+                # Recalculate if time is way off
+                if abs(time_to_target_x - t_final) > 0.5:
+                     final_path = rk4_blaster(s0, time_to_target_x, ALPHA, G)
+                     final_pos = final_path[-1]
+
+                dev_y = final_pos[2] - target_at_impact[1]
+                dev_z = final_pos[3] - target_at_impact[2]
+                obj = dev_y**2 + dev_z**2
+
+                if obj < min_obj:
+                    min_obj = obj
+                    best_phi = phi
+                    best_theta = theta
+
+    return best_phi, best_theta
+
+
+# --- Main LUT Generation ---
+if __name__ == "__main__":
+    print("Generating Lookup Table... This will take a long time.")
+
+    lut_data = np.zeros((TARGET_X_POINTS, TARGET_Y_POINTS, TARGET_Z_POINTS, 2))
+
+    x_coords = np.linspace(TARGET_X_MIN, TARGET_X_MAX, TARGET_X_POINTS)
+    y_coords = np.linspace(TARGET_Y_MIN, TARGET_Y_MAX, TARGET_Y_POINTS)
+    z_coords = np.linspace(TARGET_Z_MIN, TARGET_Z_MAX, TARGET_Z_POINTS)
+
+    total_points = TARGET_X_POINTS * TARGET_Y_POINTS * TARGET_Z_POINTS
+    count = 0
+
+    for i, x in enumerate(x_coords):
+        for j, y in enumerate(y_coords):
+            for k, z in enumerate(z_coords):
+                count += 1
+                print(f"Calculating point {count}/{total_points} -> Target(x={x:.2f}, y={y:.2f}, z={z:.2f})")
+                target = np.array([x, y, z])
+                phi, theta = solve_for_target(target)
+                lut_data[i, j, k, 0] = phi
+                lut_data[i, j, k, 1] = theta
+    
+    # --- Write C++ Header File ---
+    with open("lut.h", "w") as f:
+        f.write("#pragma once\n\n")
+        f.write("#include <Arduino.h>\n\n")
+        f.write("// --- Pre-computed Trajectory Lookup Table ---\n")
+        f.write("// Generated by generate_lut.py\n\n")
+
+        f.write(f"#define LUT_X_POINTS {TARGET_X_POINTS}\n")
+        f.write(f"#define LUT_Y_POINTS {TARGET_Y_POINTS}\n")
+        f.write(f"#define LUT_Z_POINTS {TARGET_Z_POINTS}\n\n")
+
+        f.write(f"const float LUT_X_MIN = {TARGET_X_MIN:.4f}f;\n")
+        f.write(f"const float LUT_X_MAX = {TARGET_X_MAX:.4f}f;\n")
+        f.write(f"const float LUT_Y_MIN = {TARGET_Y_MIN:.4f}f;\n")
+        f.write(f"const float LUT_Y_MAX = {TARGET_Y_MAX:.4f}f;\n")
+        f.write(f"const float LUT_Z_MIN = {TARGET_Z_MIN:.4f}f;\n")
+        f.write(f"const float LUT_Z_MAX = {TARGET_Z_MAX:.4f}f;\n\n")
+        
+        f.write("struct Solution { float phi; float theta; };\n\n")
+        f.write("const Solution lut[LUT_X_POINTS][LUT_Y_POINTS][LUT_Z_POINTS] PROGMEM = {\n")
+
+        for i in range(TARGET_X_POINTS):
+            f.write("    { // X Index " + str(i) + "\n")
+            for j in range(TARGET_Y_POINTS):
+                f.write("        { // Y Index " + str(j) + "\n")
+                f.write("            {")
+                for k in range(TARGET_Z_POINTS):
+                    phi = lut_data[i, j, k, 0]
+                    theta = lut_data[i, j, k, 1]
+                    f.write(f"{{ {phi:.6f}f, {theta:.6f}f }}")
+                    if k < TARGET_Z_POINTS - 1:
+                        f.write(", ")
+                f.write("}")
+                if j < TARGET_Y_POINTS - 1:
+                    f.write(",\n")
+                else:
+                    f.write("\n")
+            f.write("        }\n")
+            if i < TARGET_X_POINTS - 1:
+                 f.write("    },\n")
+            else:
+                 f.write("    }\n")
+        f.write("};\n")
+
+    print("\nLUT generation complete! 'lut.h' has been created.")
