@@ -1,4 +1,10 @@
-after following guide at https://nlopt.readthedocs.io/en/latest/NLopt_Installation/
+sudo apt install git
+sudo apt install cmake
+git clone https://github.com/stevengj/nlopt.git
+after following guide at https://nlopt.readthedocs.io/en/latest/NLopt_Installation/ do the following:
 fix lib not found: sudo apt install libnlopt0
-to compile: gcc main.c -L /usr/local/lib -o darttrack -lm -lnlopt
+to compile: gcc main.c -o darttrack -lm -lnlopt
 to run: ./darttrack
+
+to scp all files in folder (run this in terminal in folder):
+pscp * {username}@{pi_ip_address}:{directory_on_pi}
