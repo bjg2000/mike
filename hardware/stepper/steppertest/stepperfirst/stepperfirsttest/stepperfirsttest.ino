@@ -48,6 +48,6 @@ void setup() {
 void loop() {
   myProDriver.step(2000, 0); // turn 200 steps, CW direction
   delay(1000);
-  myProDriver.step(2002, 1); // turn 200 steps, CCW direction
+  myProDriver.step(2000, 1); // turn 200 steps, CCW direction
   delay(1000);
 }

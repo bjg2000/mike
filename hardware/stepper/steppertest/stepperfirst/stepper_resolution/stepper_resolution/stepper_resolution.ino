@@ -51,16 +51,16 @@ void setup() {
 }
 
 void loop() {
-  myProDriver.step(200, 0); // turn 200 steps, CW direction
+  myProDriver.step(200, 0, 1); // turn 200 steps, CW direction, 1ms delay between movement pulses
   myProDriver.changeStepResolution(8);//increase resolution to 0.225 degree
   delay(500);
-  myProDriver.step(200, 0); // turn 200 steps, CW direction
+  myProDriver.step(200, 0, 1); // turn 200 steps, CW direction, 1ms delay between movement pulses
   myProDriver.changeStepResolution(1);//decrease resolution to 1.8 degree
   delay(500);
-  myProDriver.step(200, 1); // turn 200 steps, CCW direction
+  myProDriver.step(200, 1, 1); // turn 200 steps, CCW direction, 1ms delay between movement pulses
   myProDriver.changeStepResolution(8);//increase resolution to 0.225 degree
   delay(500);
-  myProDriver.step(200, 1); // turn 200 steps, CCW direction
+  myProDriver.step(200, 1, 1); // turn 200 steps, CCW direction, 1ms delay between movement pulses
   myProDriver.changeStepResolution(1);//decrease resolution to 1.8 degree
   delay(500);
 }
