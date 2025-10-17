@@ -3,6 +3,7 @@ sudo apt install cmake
 git clone https://github.com/stevengj/nlopt.git
 after following guide at https://nlopt.readthedocs.io/en/latest/NLopt_Installation/ do the following:
 fix lib not found: sudo apt install libnlopt0
+could also try: sudo apt-get install libnlopt0 libnlopt-dev
 to compile: gcc main.c -o darttrack -lm -lnlopt
 to run: ./darttrack
 
